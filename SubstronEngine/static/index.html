@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUBSTRON 2050 - Autonomous Silicon Agent</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --cyan: #58a6ff;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #sidebar {
+      width: 300px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+    #logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: var(--cyan);
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    #search {
+      width: 100%;
+      padding: 8px 12px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+    #skills-list {
+      flex: 1;
+      overflow-y: auto;
+      list-style: none;
+    }
+    .skill-item {
+      padding: 8px;
+      border-bottom: 1px solid #21262d;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .skill-item:hover { background: #21262d; }
+    .skill-title { color: var(--text-bright); font-weight: 600; font-size: 13px; }
+    .skill-desc { font-size: 11px; color: #8b949e; }
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #090d13;
+    }
+    #header {
+      padding: 12px 20px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .message {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    .user { align-self: flex-end; background: #1f6feb; color: #fff; }
+    .assistant { align-self: flex-start; background: var(--card); border: 1px solid var(--border); }
+    #input-bar {
+      padding: 16px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+    }
+    #prompt-input {
+      flex: 1;
+      padding: 12px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    button {
+      padding: 0 20px;
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover { background: #2ea043; }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <div id="logo">⚡ SUBSTRON 2050</div>
+    <input type="text" id="search" placeholder="Search 2,689 skills..." oninput="searchSkills(this.value)">
+    <ul id="skills-list"></ul>
+  </div>
+  <div id="main">
+    <div id="header">
+      <div><strong>Status:</strong> <span style="color:#3fb950">ONLINE</span> • 2,689 Skills Ready</div>
+      <div><strong>Model:</strong> qwen2.5-coder:7b</div>
+    </div>
+    <div id="chat-container">
+      <div class="message assistant">
+        Hello! I am <strong>Substron</strong>, your autonomous coding agent running locally. I have <strong>2,689 skills</strong> available offline. How can I assist you with your project today?
+      </div>
+    </div>
+    <div id="input-bar">
+      <input type="text" id="prompt-input" placeholder="Give an instruction or coding task..." onkeydown="if(event.key==='Enter') sendTask()">
+      <button onclick="sendTask()">RUN</button>
+    </div>
+  </div>
+
+  <script>
+    async function searchSkills(q) {
+      if (!q) q = 'docker';
+      try {
+        const res = await fetch(`/api/skills?q=${encodeURIComponent(q)}&limit=25`);
+        const data = await res.json();
+        const list = document.getElementById('skills-list');
+        list.innerHTML = '';
+        data.skills.forEach(s => {
+          const li = document.createElement('li');
+          li.className = 'skill-item';
+          li.innerHTML = `<div class="skill-title">${s.name}</div><div class="skill-desc">${s.description.slice(0, 70)}...</div>`;
+          list.appendChild(li);
+        });
+      } catch(e) {}
+    }
+
+    async function sendTask() {
+      const input = document.getElementById('prompt-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      const container = document.getElementById('chat-container');
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.innerText = text;
+      container.appendChild(userMsg);
+
+      const assistantMsg = document.createElement('div');
+      assistantMsg.className = 'message assistant';
+      assistantMsg.innerHTML = '<em>Substron is thinking & executing tools...</em>';
+      container.appendChild(assistantMsg);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const res = await fetch('/api/task/run', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ instruction: text, workspace_dir: '.' })
+        });
+        const data = await res.json();
+        assistantMsg.innerHTML = data.summary.replace(/\\n/g, '<br>');
+      } catch (e) {
+        assistantMsg.innerText = 'Error: ' + e;
+      }
+      container.scrollTop = container.scrollHeight;
+    }
+
+    searchSkills('docker');
+  </script>
+</body>
+</html>

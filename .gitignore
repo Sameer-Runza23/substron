@@ -1,0 +1,41 @@
+# Substron Git Ignore Rules
+
+# Python virtual environment & cache
+venv/
+SubstronEngine/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# LLM Models & heavy binary blobs (Never commit to GitHub)
+models/
+SubstronEngine/models/
+*.gguf
+*.bin
+
+# Ollama local binary cache
+SubstronEngine/ollama_app/
+SubstronEngine/bin/
+
+# Swift build artifacts
+SubstronApp/.build/
+SubstronApp/.swiftpm/
+Substron.app
+*.xcodeproj
+*.xcworkspace
+
+# Cloned skills raw repository (Setup script auto-fetches this)
+SubstronSkills/raw/
+
+# Test workspace & user outputs
+test_workspace/
+SubstronWorkspace/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.ollama/
+SubstronEngine/.ollama/
